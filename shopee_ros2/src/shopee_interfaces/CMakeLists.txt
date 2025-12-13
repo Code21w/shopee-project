@@ -29,7 +29,6 @@ set(msg_files
   "msg/PickeeMobileArrival.msg"
   "msg/PickeeMobilePose.msg"
   "msg/PickeeMobileSpeedControl.msg"
-  "msg/PickeeMobileStatus.msg"
   "msg/PickeeMoveStatus.msg"
   "msg/PickeeProductDetection.msg"
   "msg/PickeeProductLoaded.msg"
@@ -52,7 +51,6 @@ set(msg_files
 
 set(srv_files
   "srv/ArmMoveToPose.srv"
-  "srv/ArmCheckBbox.srv"
   "srv/ArmPickProduct.srv"
   "srv/ArmPlaceProduct.srv"
   "srv/ChangeTrackingMode.srv"
@@ -63,12 +61,10 @@ set(srv_files
   "srv/MainGetSectionPose.srv"
   "srv/PackeePackingCheckAvailability.srv"
   "srv/PackeePackingStart.srv"
-  "srv/PackeeVisionBppStart.srv"
   "srv/PackeeVisionDetectProductsInCart.srv"
   "srv/PackeeVisionVerifyPackingComplete.srv"
   "srv/PickeeMainVideoStreamStart.srv"
   "srv/PickeeMainVideoStreamStop.srv"
-  "srv/PickeeMobileStatus.srv"
   "srv/PickeeMobileMoveToLocation.srv"
   "srv/PickeeMobileUpdateGlobalPath.srv"
   "srv/PickeeProductDetect.srv"
