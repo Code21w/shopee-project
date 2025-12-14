@@ -1086,18 +1086,70 @@ STT 모듈은 **주변 소음 환경에서도 안정적으로 발화 구간을 �
 
 </details>
 
-
-
 <details>
-<summary> Packee Vision (포장대 이미지 학습 및 처리) </summary>
+<summary> Packee Main (포장로봇 작업리스트 생성) </summary>
+
+Packee Main은 **메인 서버로부터 전달받은 상품 리스트**를 기반으로 **BPP(3D Bin Packing Problem) 해결 알고리즘**을 수행하여,
+포장 박스 내부의 **상품 배치도** 및 로봇이 수행할 **작업 시퀀스**를 생성합니다.
+
+### 입력 (Main Server → Packee Main)
+- 상품 목록: `quantity(수량)`, `id`, `width`, `depth`, `height`
+
+### 처리 (BPP + Heuristic API)
+- 휴리스틱 알고리즘 API를 호출하여 배치도를 생성하며, 아래 조건을 반영해 **로봇 작업 가능성(Gripper/충돌)**을 확보합니다.
+  1. **배치 순서 규칙**: `z`축 기준 **높이가 낮은 상품부터** 우선 배치
+  2. **그리퍼 한계 조건**: 상품 배치 시 **특정 한쪽 면의 길이가 5를 초과하지 않도록** 제한
+  3. **마진(여유 거리) 생성**: 그리퍼 제약을 고려해  
+     - **상품 ↔ 상품**, **상품 ↔ 포장 박스** 사이에 **안전 마진**을 적용
+
+### 출력 (Packing Result → Task List)
+- 배치 결과를 로봇 작업리스트 형태로 출력:
+  - `seq`, `id`, `6D Pose (x, y, z, r, p, y)`
 
 </details>
 
+<details>
+<summary> Packee Arm (포장 매니퓰레이터) </summary>
 
+Packee Arm은 **상품 Pick & Place를 안정적으로 수행하기 위한 Place 동작 중심의 매니퓰레이터 제어/경로계획 시스템**
 
+### 1) MoveIt 기반 IK/제어 안정화
+기존 매니퓰레이터 SDK에서 **좌표 입력 기반 제어 시 IK 해를 찾지 못하는 경우**가 발생
+이에 따라 SDK 기본 kinematics solver의 한계를 보완하기 위해 **MoveIt을 도입**했고, 상황에 맞게 **다양한 kinematics solver를 선택/적용**할 수 있도록 구성
+
+### 2) 좌표계(GCS/WCS/BCS) 및 TCP 정합
+포장 작업을 위해 `GCS / WCS / BCS` 간 좌표계 관계 정의가 필요
+
+- **GCS와 WCS의 원점은 동일**하게 설정  
+- URDF 상에서 **GCS ↔ BCS 변환 관계**를 명시
+- 제공된 로봇 모델의 엔드이펙터 프레임이 실제 그리퍼 기준이 아님  
+  **TCP(Tool Center Point)를 URDF에 추가 정의**하고 TF를 발행하여  
+  상품 배치 시 **정확한 목표 좌표(Place pose)** 를 입력받을 수 있도록 설정
+
+### 3) 충돌 인지 기반 경로계획 (Collision-aware Planning)
+상품은 **박스 내부에 배치**되므로, 현실 환경에서의 충돌을 고려한 계획이 필수
+
+- 박스 및 작업 환경을 **충돌 객체(Collision Objects)** 로 사전에 등록
+- 같은 목표 좌표라도 매니퓰레이터가 취할 수 있는 자세가 다양하므로,  
+  **충돌 객체를 인지한 상태에서** 안전한 경로를 생성하도록 구성
+
+### 4) MTC 기반 Pick & Place 모듈화 및 수명 관리
+Pick & Place는 상품 수량이 늘어남에따른 **동일한 패턴의 반복**  
+따라서 MoveIt Task Constructor(MTC)를 활용해 동작을 **모듈화**하고, 반복 작업을 일관되게 관리하도록 구현
+
+- 동작 단계별 **cost가 산출**되며,
+- 이 cost를 기반으로 **매니퓰레이터의 작업 부하/수명 관리 지표**로 활용 가능하도록 설계
+
+### 5) 다중 플래너 구성으로 실패 상황 대비 (Backup Planning)
+단일 경로계획 알고리즘만 사용할 경우, 특정 상황에서 **경로 생성 실패 가능성**이 존재  
+이를 방지하기 위해 여러 플래너를 구성해 **백업 플랜**을 생성
+
+- 사용 플래너: **Descartes**, **OMPL**, **Pilz Industrial Motion Planner**, **STOMP**
+
+</details>
 
 <details>
-<summary> Packee Arm (포장대 로봇팔) </summary>
+<summary> Packee Vision (포장대 이미지 학습 및 처리) </summary>
 
 </details>
 
